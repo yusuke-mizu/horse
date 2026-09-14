@@ -1,0 +1,36 @@
+[project]
+name = "horse-sim"
+version = "0.1.0"
+description = "競馬予想シミュレーション（基礎能力 × 能力発揮率 × Monte Carlo）"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "jinja2>=3.1",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.5",
+  "python-multipart>=0.0.9",
+  "sqlalchemy>=2.0",
+  "typer>=0.12",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "httpx>=0.27"]
+
+[project.scripts]
+horse-sim = "horse_sim.ui.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+horse_sim = ["ui/templates/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

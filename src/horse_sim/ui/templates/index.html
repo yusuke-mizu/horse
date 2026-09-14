@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>競馬予想シミュレーション</title>
+  <style>
+    body { font-family: sans-serif; margin: 24px; background: #111; color: #eee; }
+    a { color: #9cf; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border-bottom: 1px solid #333; padding: 8px; text-align: left; }
+    h1 { font-size: 20px; }
+  </style>
+</head>
+<body>
+  <h1>レース一覧</h1>
+  <p>基礎能力 → 今回発揮率 → 予測走破性能 → 順位確率。人気は能力の入力にしていません。</p>
+  <table>
+    <tr><th>ID</th><th>日付</th><th>場</th><th>R</th><th>馬場</th><th>距離</th><th>状態</th></tr>
+    {% for r in races %}
+    <tr>
+      <td><a href="/races/{{ r.id }}">{{ r.id }}</a></td>
+      <td>{{ r.date }}</td>
+      <td>{{ r.course }}</td>
+      <td>{{ r.race_name }}</td>
+      <td>{{ r.surface }}</td>
+      <td>{{ r.distance }}</td>
+      <td>{{ r.track_condition }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

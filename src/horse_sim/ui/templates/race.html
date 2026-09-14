@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>{{ pred.race.course }} {{ pred.race.race_name }}</title>
+  <style>
+    body { font-family: sans-serif; margin: 24px; background: #111; color: #eee; }
+    a { color: #9cf; }
+    .meta { color: #aaa; margin-bottom: 16px; }
+    .card { border: 1px solid #333; padding: 16px; margin-bottom: 12px; background: #1a1a1a; }
+    .plus { color: #8d8; }
+    .minus { color: #d88; }
+    .weak { color: #aaa; font-size: 13px; }
+    .mark { color: #fc6; }
+    table { border-collapse: collapse; }
+    td, th { padding: 4px 10px; text-align: left; }
+  </style>
+</head>
+<body>
+  <p><a href="/">← 一覧</a></p>
+  <h1>{{ pred.race.course }} {{ pred.race.race_name }}</h1>
+  <div class="meta">
+    {{ pred.race.date }}　{{ pred.race.surface }} {{ pred.race.distance }}m　{{ pred.race.track_condition }}<br>
+    展開予測　スロー {{ (pred.pace.slow * 100)|round(0) }}%　平均 {{ (pred.pace.normal * 100)|round(0) }}%　ハイ {{ (pred.pace.fast * 100)|round(0) }}%
+  </div>
+  {% for h in pred.horses %}
+  <div class="card">
+    <h2>
+      {{ h.name }}
+      {% if h.mark_ability %}<span class="mark">◎能力</span>{% endif %}
+      {% if h.mark_value %}<span class="mark">★期待値</span>{% endif %}
+    </h2>
+    <table>
+      <tr><th>基礎能力</th><td>{{ '%.1f'|format(h.base_ability) }} ± {{ '%.1f'|format(h.ability_sd) }}</td></tr>
+      <tr><th>今回発揮率</th><td>{{ '%.1f'|format(h.expression_rate * 100) }}%（{{ '%.1f'|format(h.expression_low * 100) }}〜{{ '%.1f'|format(h.expression_high * 100) }}%）</td></tr>
+      <tr><th>予測能力</th><td>{{ '%.1f'|format(h.predicted_ability) }}（{{ '%.1f'|format(h.ability_low) }}〜{{ '%.1f'|format(h.ability_high) }}）</td></tr>
+      <tr><th>予測タイム</th><td>{{ h.predicted_time }}</td></tr>
+      <tr><th>1着 / 2着 / 3着</th><td>{{ '%.1f'|format(h.p_win * 100) }}% / {{ '%.1f'|format(h.p_second * 100) }}% / {{ '%.1f'|format(h.p_third * 100) }}%</td></tr>
+      <tr><th>複勝率 / 平均着順</th><td>{{ '%.1f'|format(h.p_show * 100) }}% / {{ '%.2f'|format(h.mean_rank) }}</td></tr>
+      <tr><th>市場勝率</th><td>{% if h.market_win_prob %}{{ '%.1f'|format(h.market_win_prob * 100) }}%（オッズ {{ h.odds }}） 差 {{ '%.1f'|format((h.edge or 0) * 100) }}pt{% else %}未取得{% endif %}</td></tr>
+      <tr><th>期待値</th><td>{% if h.expected_value %}{{ '%.2f'|format(h.expected_value) }}{% else %}—{% endif %}</td></tr>
+      <tr><th>信頼度</th><td>{{ h.confidence }}（使用走数 {{ h.n_starts }}）</td></tr>
+    </table>
+    <p class="plus">プラス要因<br>{% if h.plus %}{% for t in h.plus %}{{ t }}<br>{% endfor %}{% else %}推定済みのプラス補正なし（固定加点は未使用）{% endif %}</p>
+    <p class="minus">マイナス要因<br>{% if h.minus %}{% for t in h.minus %}{{ t }}<br>{% endfor %}{% else %}推定済みのマイナス補正なし{% endif %}</p>
+    <p class="weak">根拠<br>{% for t in h.method %}{{ t }}<br>{% endfor %}
+      {% for t in h.weak %}{{ t }}<br>{% endfor %}
+    </p>
+  </div>
+  {% endfor %}
+</body>
+</html>

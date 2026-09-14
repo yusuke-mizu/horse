@@ -1,0 +1,3 @@
+race_key,horse_name,sex,birth_year,sire,jockey,trainer,gate,weight,body_weight,body_weight_change,odds,popularity,equipment,running_style,finish_position,finish_time,last_3f,margin
+2024-01-07-京都-11,サンプルA,牡,2020,父A,騎手A,調教師A,1,56,480,2,3.2,1,,先行,1,133.5,33.8,0
+2024-01-07-京都-11,サンプルB,牝,2021,父B,騎手B,調教師B,5,54,452,-4,5.8,2,ブリンカー,差し,2,133.8,33.4,1.5
