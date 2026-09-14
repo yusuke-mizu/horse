@@ -2,7 +2,7 @@
 
 過去データから馬の基礎能力を推定し、今回の条件での能力発揮率を掛け、Monte Carlo で着順確率を出す。人気は能力の入力に使わない。
 
-現在は **Phase 1**（データ投入 → 基礎能力 → 予測タイム → 順位確率）。馬場・血統・騎手などの補正は `factor_effects` に推定結果が入るまで係数 1.0。
+現在は **Phase 2**（基礎能力 ＋ 馬場・距離・コース・枠・脚質×展開の推定）。固定加点は使わず、当該走より前の残差だけを見る。
 
 ## セットアップ
 
@@ -17,6 +17,8 @@ python -m horse_sim ingest-synthetic
 python -m horse_sim rate
 python -m horse_sim races
 python -m horse_sim predict --race-id 100
+python -m horse_sim estimate-factors
+python -m horse_sim compare-models
 python -m horse_sim serve
 ```
 

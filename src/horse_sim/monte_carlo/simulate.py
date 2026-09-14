@@ -28,12 +28,6 @@ class SimOutput:
     pace_counts: dict[str, int] = field(default_factory=dict)
 
 
-def _pace_shift(label: str) -> dict[str, float]:
-    """展開ラベルごとの能力シフトは未推定。Phase 1 では 0。"""
-    _ = label
-    return {}
-
-
 def simulate(
     horses: list[HorseDrawInput],
     pace: PacePrior,
@@ -41,6 +35,7 @@ def simulate(
     draws: int | None = None,
     seed: int = 7,
     styles: dict[int, str] | None = None,
+    pace_style_shifts: dict[str, dict[str, float]] | None = None,
 ) -> SimOutput:
     draws = draws or settings.monte_carlo_draws
     rng = Random(seed)
@@ -64,7 +59,7 @@ def simulate(
                 label = name
                 break
         pace_counts[label] += 1
-        shifts = _pace_shift(label)
+        shifts = (pace_style_shifts or {}).get(label, {})
         samples: list[tuple[int, float]] = []
         for h in horses:
             expr = rng.gauss(h.expression_rate, h.expression_sd)

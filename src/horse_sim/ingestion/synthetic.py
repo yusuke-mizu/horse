@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -21,11 +21,25 @@ COURSES = ["京都", "阪神", "東京", "中山"]
 DISTANCES = [1200, 1400, 1600, 1800, 2000]
 CONDITIONS = ["良", "稍重", "重", "不良"]
 STYLES = ["逃げ", "先行", "差し", "追込"]
+PACE_JP = {"slow": "スロー", "normal": "平均", "fast": "ハイ"}
 
 
 def _true_time(true_ability: float, distance: int, noise: float) -> float:
     par = distance / 16.4
     return par - (true_ability - 100.0) * 0.22 + noise
+
+
+def _pick_pace(rng: random.Random, front: float) -> str:
+    fast = 0.18 + 0.35 * front
+    slow = 0.22 + 0.25 * (1.0 - front)
+    normal = max(0.15, 1.0 - fast - slow)
+    total = slow + normal + fast
+    u = rng.random() * total
+    if u < slow:
+        return "slow"
+    if u < slow + normal:
+        return "normal"
+    return "fast"
 
 
 def ingest_synthetic(
@@ -39,10 +53,12 @@ def ingest_synthetic(
 ) -> IngestReport:
     """パイプライン検証用の合成データ。実開催の成績ではない。"""
     rng = random.Random(seed)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     horses: list[Horse] = []
     true_ability: dict[int, float] = {}
     style_of: dict[int, str] = {}
+    pref_dist: dict[int, int] = {}
+    going_skill: dict[int, float] = {}
 
     for i in range(n_horses):
         horse = Horse(
@@ -57,6 +73,8 @@ def ingest_synthetic(
         horses.append(horse)
         true_ability[horse.id] = rng.gauss(100.0, 3.2)
         style_of[horse.id] = STYLES[i % 4]
+        pref_dist[horse.id] = DISTANCES[i % len(DISTANCES)]
+        going_skill[horse.id] = rng.gauss(0.0, 0.12)
 
     jockeys = []
     trainers = []
@@ -95,15 +113,37 @@ def ingest_synthetic(
             session.flush()
             race_count += 1
             field = rng.sample(horses, k=min(12, len(horses)))
-            times: list[tuple[Horse, float, float]] = []
-            for horse in field:
+            gates = list(range(1, len(field) + 1))
+            rng.shuffle(gates)
+            front = sum(1 for h in field if style_of[h.id] in ("逃げ", "先行")) / max(len(field), 1)
+            pace = _pick_pace(rng, front)
+            times: list[tuple[Horse, int, float]] = []
+            for horse, gate in zip(field, gates):
                 noise = rng.gauss(0.0, 0.35)
                 t = _true_time(true_ability[horse.id], distance, noise)
-                times.append((horse, t, noise))
-            times.sort(key=lambda x: x[1])
-            winner_t = times[0][1]
-            session.add(RaceResult(race_id=race.id, winning_time=round(winner_t, 1), pace_label="平均"))
-            for pos, (horse, t, _) in enumerate(times, start=1):
+                t += 0.14 * abs(distance - pref_dist[horse.id]) / 400.0
+                if going in ("重", "不良"):
+                    t -= going_skill[horse.id]
+                if surface == "turf" and gate <= 4:
+                    t -= 0.05
+                style = style_of[horse.id]
+                if pace == "slow" and style in ("逃げ", "先行"):
+                    t -= 0.09
+                if pace == "fast" and style in ("差し", "追込"):
+                    t -= 0.08
+                if pace == "fast" and style == "逃げ":
+                    t += 0.11
+                times.append((horse, gate, t))
+            times.sort(key=lambda x: x[2])
+            winner_t = times[0][2]
+            session.add(
+                RaceResult(
+                    race_id=race.id,
+                    winning_time=round(winner_t, 1),
+                    pace_label=PACE_JP[pace],
+                )
+            )
+            for pos, (horse, gate, t) in enumerate(times, start=1):
                 jk = rng.choice(jockeys)
                 tr = rng.choice(trainers)
                 margin = round((t - winner_t) * 5.0, 1)
@@ -113,7 +153,7 @@ def ingest_synthetic(
                     horse_id=horse.id,
                     jockey_id=jk.id,
                     trainer_id=tr.id,
-                    gate=pos if pos <= 12 else 12,
+                    gate=gate,
                     weight=55.0 + (hash(horse.name) % 5),
                     body_weight=460 + (horse.id % 40),
                     body_weight_change=rng.choice([-8, -4, 0, 2, 6]),
@@ -132,11 +172,12 @@ def ingest_synthetic(
                         surface=surface,
                         distance=distance,
                         track_condition=going,
-                        gate=entry.gate,
+                        gate=gate,
                         weight=entry.weight,
                         body_weight=entry.body_weight,
                         body_weight_change=entry.body_weight_change,
                         jockey=jk.name,
+                        pace=PACE_JP[pace],
                         finish_position=pos,
                         finish_time=round(t, 1),
                         last_3f=round(33.5 + rng.gauss(0, 0.6), 1),
@@ -166,9 +207,3 @@ def ingest_synthetic(
         quality_score=1.0,
         notes=src.notes,
     )
-
-
-def implied_market_prob(odds: float | None) -> float | None:
-    if not odds or odds <= 1.0:
-        return None
-    return 1.0 / odds

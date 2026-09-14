@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from horse_sim.db.models import FactorEffect, HorsePerformance, Race, RaceEntry
+from horse_sim.db.models import FactorEffect, Race, RaceEntry
 from horse_sim.factors.context import gate_band
 from horse_sim.factors.stats import EffectEstimate, confidence_cap
 

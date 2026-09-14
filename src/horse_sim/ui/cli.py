@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from horse_sim.config import settings
 from horse_sim.db.models import Race, get_session_factory, init_db
+from horse_sim.factors.estimate import PHASE2_VERSION, build_population_index, persist_population
 from horse_sim.ingestion.csv_loader import ingest_csv
 from horse_sim.ingestion.synthetic import ingest_synthetic
 from horse_sim.pipeline import fit_abilities, predict_race
@@ -85,6 +86,36 @@ def races(limit: int = 20) -> None:
     rows = session.query(Race).order_by(Race.date.desc()).limit(limit).all()
     for r in rows:
         typer.echo(f"{r.id}\t{r.date}\t{r.course}\t{r.race_name}\t{r.surface}\t{r.distance}")
+
+
+@app.command("estimate-factors")
+def estimate_factors_cmd() -> None:
+    session = _session()
+    fit_abilities(session)
+    last = session.query(Race).order_by(Race.date.desc()).first()
+    if last is None:
+        typer.echo("no races")
+        raise typer.Exit(1)
+    index = build_population_index(session, last.date)
+    n = persist_population(session, index, last.date)
+    typer.echo(f"saved {n} factor_effects as {PHASE2_VERSION} (as_of={last.date}, includes null effects)")
+
+
+@app.command("compare-models")
+def compare_models_cmd(limit: int = 12, draws: int = 250) -> None:
+    from horse_sim.backtest.compare import compare_ability_vs_phase2
+
+    session = _session()
+    out = compare_ability_vs_phase2(session, limit=limit, draws=draws)
+    for code, summary in out.items():
+        typer.echo(f"{code}: n={summary['n']} brier={summary['brier']:.4f} log_loss={summary['log_loss']:.4f}")
+    v1 = out.get("ability_v1", {})
+    v2 = out.get(PHASE2_VERSION, {})
+    if v1.get("brier") is not None and v2.get("brier") is not None:
+        if v2["brier"] < v1["brier"]:
+            typer.echo("Phase 2 improved Brier; keep condition weights.")
+        else:
+            typer.echo("Phase 2 did not improve Brier; condition weights will be reduced on later predicts.")
 
 
 @app.command()

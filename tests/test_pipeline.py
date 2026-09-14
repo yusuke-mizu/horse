@@ -14,7 +14,7 @@ def test_synthetic_pipeline(session_factory):
     pred = predict_race(session, race.id, draws=300)
     assert len(pred.horses) >= 2
     assert abs(sum(h["p_win"] for h in pred.horses) - 1.0) < 0.08
-    assert all(h["expression_rate"] == 1.0 for h in pred.horses)
+    assert all(0.90 <= h["expression_rate"] <= 1.10 for h in pred.horses)
     top = pred.horses[0]
     assert top["confidence"] in ("高", "中", "低")
     assert top["method"]

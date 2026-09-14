@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from horse_sim.db.models import Race, RaceEntry
+from horse_sim.db.models import RaceEntry
 
 
 def gate_band(gate: int | None) -> str | None:

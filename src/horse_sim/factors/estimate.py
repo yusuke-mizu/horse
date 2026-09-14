@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from horse_sim.db.models import FactorEffect
 from horse_sim.factors.context import gate_band
-from horse_sim.factors.residuals import ResidualRow, collect_residuals
+from horse_sim.factors.residuals import collect_residuals
 from horse_sim.factors.stats import EffectEstimate, from_residuals
 
 
@@ -126,9 +126,8 @@ def build_population_index(session: Session, as_of: date) -> PopulationIndex:
 def persist_population(session: Session, index: PopulationIndex, as_of: date) -> int:
     session.query(FactorEffect).filter(FactorEffect.model_version == PHASE2_VERSION).delete()
     n = 0
-    dates = [e for e in index.estimates]
     train_end = as_of
-    for est in dates:
+    for est in index.estimates:
         session.add(
             FactorEffect(
                 factor_name=est.factor_name,

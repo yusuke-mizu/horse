@@ -36,20 +36,25 @@ def build_explanations(
     )
     used = [f for f in factors if f.used]
     unused_weak = [f for f in factors if not f.used]
-    if not used:
-        rows.append(
-            {
-                "kind": "method",
-                "factor_name": "expression_rate",
-                "magnitude": expression,
-                "sample_size": 0,
-                "confidence": 0.0,
-                "text": (
-                    "今回発揮率は Phase 1 では推定済み factor_effects が無いため 100% 近傍。"
-                    "馬場・血統・騎手などの固定加点は適用していない。"
-                ),
-            }
-        )
+    rows.append(
+        {
+            "kind": "method",
+            "factor_name": "expression_rate",
+            "magnitude": expression,
+            "sample_size": sum(f.sample_size for f in factors),
+            "confidence": 0.0,
+            "text": (
+                f"今回発揮率 {expression * 100:.1f}%。"
+                "条件補正は当該走より前の残差から推定。固定加点は使っていない。"
+                "サンプルが足りない因子は補正なし。"
+                if factors
+                else (
+                    "今回発揮率は条件因子を使わず 100% 近傍。"
+                    "馬場・距離・コース・枠の固定加点は適用していない。"
+                )
+            ),
+        }
+    )
     for f in used:
         kind = "plus" if f.multiplier > 1.0 else "minus"
         rows.append(

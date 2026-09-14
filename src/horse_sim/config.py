@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     data_dir: Path = Path("data")
     database_url: str = "sqlite:///data/horse_sim.db"
-    model_code: str = "ability_v1"
+    model_code: str = "ability_v2"
     monte_carlo_draws: int = 2000
     ability_prior: float = 100.0
     ability_prior_strength: float = 4.0
