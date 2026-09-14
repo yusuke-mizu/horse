@@ -1,0 +1,16 @@
+{
+  "name": "horse-sim",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler d1 migrations apply horse-sim --local && wrangler dev",
+    "deploy": "wrangler d1 migrations apply horse-sim --remote && wrangler deploy",
+    "types": "wrangler types",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.40.0"
+  }
+}

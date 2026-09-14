@@ -35,3 +35,40 @@ UI: http://127.0.0.1:8000
 取得 / 正規化 / 能力評価 / 条件補正 / 展開 / Monte Carlo / 確率 / オッズ比較 / バックテスト / UI
 
 根拠は計算結果から生成する。経験則の固定加点はコードに置かない。
+
+## Cloudflare Workers（GitHub 経由）
+
+Python 版はローカル研究用。公開は Workers + D1 です。リポジトリは `https://github.com/yusuke-mizu/horse`。
+
+### 1. 一度だけ D1 を作る
+
+```powershell
+npm install
+npx wrangler login
+npx wrangler d1 create horse-sim
+```
+
+表示された `database_id` を `wrangler.jsonc` の `REPLACE_WITH_D1_ID` に入れる。
+
+### 2. GitHub に載せる
+
+変更を `main` に push する。
+
+**方法 A（推奨）Cloudflare ダッシュボードの Git 連携**
+
+1. [Workers & Pages](https://dash.cloudflare.com/?to=/:account/workers-and-pages) → Import a repository
+2. `yusuke-mizu/horse` を選ぶ
+3. Worker 名を `horse-sim`（`wrangler.jsonc` の `name` と一致必須）
+4. Deploy command: `npm run deploy`
+
+**方法 B GitHub Actions**
+
+リポジトリ Secrets:
+
+- `CLOUDFLARE_API_TOKEN`（Workers / D1 編集権限）
+- `CLOUDFLARE_ACCOUNT_ID`
+
+`main` への push で `.github/workflows/deploy.yml` が `npm run deploy` を実行する。
+
+初回アクセスで合成データを D1 に投入する。
+

@@ -10,5 +10,6 @@ dist/
 build/
 data/*.db
 data/*.db-journal
-.env
-.DS_Store
+node_modules/
+.wrangler/
+dist/
